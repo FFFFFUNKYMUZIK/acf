@@ -114,6 +114,7 @@ struct GPUDetectionPipeline::Impl
 
     struct Log
     {
+	double channel =0.0;
         double read = 0.0;
         double detect = 0.0;
         double complete = 0.0;
@@ -388,8 +389,15 @@ std::pair<GLuint, Detections> GPUDetectionPipeline::runFast(const ogles_gpgpu::F
 
     // Start GPU pipeline for the current frame, immediately after we have
     // retrieved results for the previous frame.
+{
+    util::ScopeTimeLogger logger = [&](double elapsed) { impl->log.channel += elapsed; };
     computeAcf(frame2, false, doDetection);
+}
     GLuint texture2 = impl->acf->first()->getOutputTexId(), texture0 = 0, outputTexture = texture2;
+
+
+
+
 
     if (impl->fifo->getBufferCount() > 0)
     {
@@ -557,6 +565,7 @@ std::shared_ptr<acf::Detector::Pyramid> GPUDetectionPipeline::createAcfCpu(const
 std::map<std::string, double> GPUDetectionPipeline::summary()
 {
     return {
+	{ "channel", impl->log.channel},
         { "read", impl->log.read },
         { "detect", impl->log.detect },
         { "complete", impl->log.complete }
